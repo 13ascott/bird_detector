@@ -1,11 +1,12 @@
 '''
  Author: Mark Landergan 2020 
 '''
+import argparse
+import cv2, imutils
+import datetime, time, threading
 from imutils.video import WebcamVideoStream
 from imutils.video import FPS
-import argparse
-import datetime, time, threading
-import cv2, imutils
+import os
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-a", "--wait-time", type=int, default=5, help="minimum time between detections")
@@ -104,7 +105,11 @@ if __name__=="__main__":
 			cv2.rectangle(md._current_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 			roi = md._current_frame[y:y+h,x:x+w]
 		     
+		    # limit amount of saved photos
 			if((time.time() - last_time) >= args["wait_time"]):
+				if not os.path.exists('photos'):
+					os.makedirs('photos')
+	
 				cv2.imwrite("photos/frame%d.jpg" % count, roi)
 				count +=1
 				last_time = time.time()
