@@ -18,7 +18,6 @@ args = vars(ap.parse_args())
 class MotionDetection:
 	
 	def __init__(self, display_detections = True):
-		self._count = 0
 		self._vs = WebcamVideoStream(src=0).start()
 		self._fps = FPS().start()
 		self._base_frame = None
@@ -33,23 +32,23 @@ class MotionDetection:
 		self._current_frame = self._current_frame[0:height, int(width/3):width]
 
 	# convert the current frame to grayscale and blur it
-	def grayBlur(self):
+	def gray_blur(self):
 		self._current_gray_frame = cv2.cvtColor(self._current_frame, cv2.COLOR_BGR2GRAY)
 		self._current_gray_frame = cv2.GaussianBlur(self._current_gray_frame, (21,21), 0)
 
 	# Update base frame every 5 minutes
-	def updateBaseFrame(self):
+	def update_base_frame(self):
 		if(self._current_gray_frame is None):
 			print("[INFO] updateBaseFrame called when gray frame wasn't set")
 			self._current_frame = md._vs.read()
 			self.resize()
-			self.grayBlur()
+			self.gray_blur()
 		self._base_frame = self._current_gray_frame
 		print(time.ctime())
-		threading.Timer(args["base_update_time"], self.updateBaseFrame).start()
+		threading.Timer(args["base_update_time"], self.update_base_frame).start()
 
 	# calculate contours between base frame and current frame
-	def calculateAreaDiff(self):
+	def calculate_area_diff(self):
 		# compute the absolute difference between the current frame 
 		# and base frame
 		frameDelta = cv2.absdiff(self._base_frame, self._current_gray_frame)
@@ -63,7 +62,7 @@ class MotionDetection:
 		
 		return [frameDelta, thresh, cnts]
 	
-	def displayImages(self, frameDelta):
+	def display_images(self, frameDelta):
 		cv2.imshow("Current frame", md._current_frame)
 		cv2.imshow("Gray base frame", md._base_frame)
 		cv2.imshow("Area difference", frameDelta)
@@ -83,7 +82,7 @@ class MotionDetection:
 if __name__=="__main__":
 	md = MotionDetection()
 	
-	md.updateBaseFrame()
+	md.update_base_frame()
 	
 	last_time = time.time()
 	count = 0
@@ -91,8 +90,8 @@ if __name__=="__main__":
 	while(True):
 		md._current_frame = md._vs.read()
 		md.resize()				
-		md.grayBlur()
-		frameDelta, thresh, cnts = md.calculateAreaDiff()
+		md.gray_blur()
+		frameDelta, thresh, cnts = md.calculate_area_diff()
 	
 		# loop over the contours
 		for c in cnts:
@@ -115,7 +114,7 @@ if __name__=="__main__":
 				last_time = time.time()
 			
 			# show the frame and record if the user presses a key
-			key = md.displayImages(frameDelta)			
+			key = md.display_images(frameDelta)			
 			# if the `q` key is pressed, break from the lop
 			if key == ord("q"):
 				break
