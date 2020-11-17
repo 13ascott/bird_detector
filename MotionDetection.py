@@ -24,6 +24,14 @@ class MotionDetection:
 		self._current_frame = None
 		self._current_gray_frame = None
 		self._display_detections = display_detections
+		self._default_img = cv2.imread("lib/default_img.png")
+
+	# call read function on WebcamVideoStream object - if no stream is available, read default image
+	def grab(self):
+		self._current_frame = self._vs.read()
+		if self._current_frame == None:
+			self._current_frame = self._default_img
+		return self._current_frame
 
 	# resize the current frame 
 	def resize(self):
@@ -37,10 +45,10 @@ class MotionDetection:
 		self._current_gray_frame = cv2.GaussianBlur(self._current_gray_frame, (21,21), 0)
 
 	# Update base frame every 5 minutes
-	def update_base_frame(self):
+	def update_base_frame(self): 
 		if(self._current_gray_frame is None):
 			print("[INFO] updateBaseFrame called when gray frame wasn't set")
-			self._current_frame = md._vs.read()
+			self._current_frame = md.grab()
 			self.resize()
 			self.gray_blur()
 		self._base_frame = self._current_gray_frame
@@ -82,13 +90,15 @@ class MotionDetection:
 if __name__=="__main__":
 	md = MotionDetection()
 	
+	md.grab()
+
 	md.update_base_frame()
 	
 	last_time = time.time()
 	count = 0
 
 	while(True):
-		md._current_frame = md._vs.read()
+		md.grab()
 		md.resize()				
 		md.gray_blur()
 		frameDelta, thresh, cnts = md.calculate_area_diff()
@@ -103,7 +113,7 @@ if __name__=="__main__":
 			(x, y, w, h) = cv2.boundingRect(c)
 			cv2.rectangle(md._current_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 			roi = md._current_frame[y:y+h,x:x+w]
-		     
+			
 		    # limit amount of saved photos
 			if((time.time() - last_time) >= args["wait_time"]):
 				if not os.path.exists('photos'):
@@ -113,13 +123,13 @@ if __name__=="__main__":
 				count +=1
 				last_time = time.time()
 			
-			# show the frame and record if the user presses a key
-			key = md.display_images(frameDelta)			
-			# if the `q` key is pressed, break from the lop
-			if key == ord("q"):
-				break
+		# show the frame and record if the user presses a key
+		key = md.display_images(frameDelta)			
+		# if the `q` key is pressed, break from the lop
+		if key == ord("q"):
+			break
 			
-			md._fps.update()
+		md._fps.update()
 			
 	# stop the timer and dispaly FPS info
 	md._fps.stop()
