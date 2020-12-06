@@ -20,17 +20,25 @@ class MotionDetection:
 	def __init__(self, display_detections = True):
 		self._vs = WebcamVideoStream(src=0).start()
 		self._fps = FPS().start()
+		self._camera_error = 0
 		self._base_frame = None
 		self._current_frame = None
 		self._current_gray_frame = None
 		self._display_detections = display_detections
 		self._default_img = cv2.imread("lib/default_img.png")
 
+		try:
+			if self._vs.frame == None:
+				self._camera_error = 1
+		except:
+			pass
+
 	# call read function on WebcamVideoStream object - if no stream is available, read default image
 	def grab(self):
-		self._current_frame = self._vs.read()
-		if self._current_frame == None:
+		if self._camera_error == 1:
 			self._current_frame = self._default_img
+		else:
+			self._current_frame = self._vs.read()
 		return self._current_frame
 
 	# resize the current frame 
@@ -48,7 +56,7 @@ class MotionDetection:
 	def update_base_frame(self): 
 		if(self._current_gray_frame is None):
 			print("[INFO] updateBaseFrame called when gray frame wasn't set")
-			self._current_frame = md.grab()
+			self._current_frame = self.grab()
 			self.resize()
 			self.gray_blur()
 		self._base_frame = self._current_gray_frame
@@ -89,8 +97,6 @@ class MotionDetection:
 
 if __name__=="__main__":
 	md = MotionDetection()
-	
-	md.grab()
 
 	md.update_base_frame()
 	
