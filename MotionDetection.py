@@ -1,5 +1,6 @@
 '''
  Author: Mark Landergan 2020 
+ Author: Austin Scott 2020
 '''
 import argparse, csv
 import cv2, imutils
