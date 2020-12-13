@@ -10,7 +10,7 @@ import os
  
 ap = argparse.ArgumentParser()
 ap.add_argument("-a", "--wait-time", type=int, default=15, help="minimum time between detections")
-ap.add_argument("-b", "--base-update-time", type=int, default=5, help="time between updating base frame")
+ap.add_argument("-b", "--base-update-time", type=int, default=60, help="time between updating base frame")
 ap.add_argument("-c", "--min-area", type=int, default=500, help="minimum area size")
 ap.add_argument("-d", "--search-width", type=int, default=200, help="width of downscaled search image")
 
@@ -71,7 +71,7 @@ class MotionDetection:
 		# compute the absolute difference between the current frame 
 		# and base frame
 		frameDelta = cv2.absdiff(self._base_frame, self._search_gray_frame)
-		thresh = cv2.threshold(frameDelta, 80, 255, cv2.THRESH_BINARY)[1]
+		thresh = cv2.threshold(frameDelta, 40, 255, cv2.THRESH_BINARY)[1]
 		
 		# dilate the thresholded image to fill in the holes, then find 
 		# contours on thresholded image
@@ -83,6 +83,7 @@ class MotionDetection:
 	
 	def display_images(self, frameDelta):
 		cv2.imshow("Current frame", md._current_frame)
+		cv2.imshow("Gray search frame", md._search_gray_frame)
 		cv2.imshow("Gray base frame", md._base_frame)
 		cv2.imshow("Area difference", frameDelta)
 
