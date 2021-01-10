@@ -134,6 +134,7 @@ class MotionDetection:
 
 if __name__=="__main__":
 	md = MotionDetection()
+
 	md.update_base_frame()
 	
 	random.seed()
