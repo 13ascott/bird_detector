@@ -36,28 +36,26 @@ class MotionDetection:
 		except:
 			pass
 
-	# call read function on WebcamVideoStream object - if no stream is available, read default image
 	def grab(self):
+		""" call read function on WebcamVideoStream object - if no stream is available, read default image """
 		if self._camera_error == 1:
 			self._current_frame = self._default_img
 		else:
 			self._current_frame = self._vs.read()
 		return self._current_frame
 
-	# resize the current frame 
 	def resize(self):
+		""" resizes the current frame, _search_frame is a downscaled version to speed up motion detection """
 		self._search_frame = imutils.resize(self._current_frame, width = args["search_width"]) # use downscaled _search_frame to do detection - but save full resolution images from _current_frame
 		# no need to crop frame
-		# height, width, channels = self._search_frame.shape 
-		# self._search_frame = self._search_frame[0:height, int(width/3):width]
 
-	# convert the current frame to grayscale and blur it
 	def gray_blur(self):
+		""" convert the current frame to grayscale and blur it """
 		self._search_gray_frame = cv2.cvtColor(self._search_frame, cv2.COLOR_BGR2GRAY)
-		self._search_gray_frame = cv2.GaussianBlur(self._search_gray_frame, (21,21), 0)
+		self._search_gray_frame = cv2.GaussianBlur(self._search_gray_frame, (3,3), 0)
 
-	# Update base frame every 5 minutes
 	def update_base_frame(self): 
+		""" Update base frame every 5 minutes """
 		if(self._search_gray_frame is None):
 			print("[INFO] updateBaseFrame called when gray frame wasn't set")
 			self._current_frame = self.grab()
@@ -67,8 +65,9 @@ class MotionDetection:
 		print(time.ctime())
 		threading.Timer(args["base_update_time"], self.update_base_frame).start()
 
-	# calculate contours between base frame and current frame
+	
 	def calculate_area_diff(self):
+		""" calculate contours between base frame and current frame """
 		# compute the absolute difference between the current frame 
 		# and base frame
 		frameDelta = cv2.absdiff(self._base_frame, self._search_gray_frame)
@@ -83,6 +82,7 @@ class MotionDetection:
 		return [frameDelta, thresh, cnts]
 	
 	def display_images(self, frameDelta):
+		""" displays the current frames (real image, downscaled search image, downscaled base frame and frameDelta) """
 		cv2.imshow("Current frame", md._current_frame)
 		cv2.imshow("Gray search frame", md._search_gray_frame)
 		cv2.imshow("Gray base frame", md._base_frame)
@@ -92,11 +92,11 @@ class MotionDetection:
 		return key
 
 	def bird_or_nah(self):
-		# return yah for now - this is where we can use our neural network to classify the image
+		""" return yah for now - this is where we can use our neural network to classify the image """
 		return True
 
-	# get a random name from database
 	def name_bird(self):
+		""" get a random name from database """
 		index = int(random.random()*2000) # there is 2000 random names in bird_names.csv
 		with open('lib/bird_names.csv', newline='') as f:
 			reader = csv.reader(f)
@@ -108,17 +108,16 @@ class MotionDetection:
 					count = count+1
 	
 	def addAnnotations(self):
+		""" draw the text and timestamp on the frame """
 		text = "Occupied"
-		
-		# draw the text and timestamp on the frame
 		cv2.putText(md._current_frame, "Bird Detected: {}".format(text), (10, 20),
 		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 		cv2.putText(md._current_frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),
 		(10, md._current_frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)	
 
-	# rescale and pad roi for _current_frame based on detected roi from _search_image
-	# this reduces search time, but maximizes image quality
 	def create_upscaled_roi(self, x, y, w, h):
+		""" rescale and pad roi for _current_frame based on detected roi from _search_image
+		    this reduces search time, but maximizes image quality """
 		height, width, channels = self._current_frame.shape 
 		scale = width/args["search_width"]
 		x = x * scale - width*0.05
@@ -130,6 +129,8 @@ class MotionDetection:
 		h = h * scale + height*0.1
 		h = int(min(height - y, h))
 		return (x, y, w, h)
+
+
 
 if __name__=="__main__":
 	md = MotionDetection()
